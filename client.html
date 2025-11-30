@@ -1,0 +1,67 @@
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script src="https://unpkg.com/mediasoup-client@3/lib/index.js"></script>
+<script>
+const socket = io('http://localhost:3000');
+let device;
+let sendTransport, recvTransport;
+let producer, consumer;
+
+async function init() {
+  // 1. getUserMedia로 audio track 가져오기
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const audioTrack = stream.getAudioTracks()[0];
+
+  // 2. 서버에서 RTP Capabilities 가져오기
+  const rtpCapabilities = await socket.emitWithAck('getRtpCapabilities');
+
+  device = new mediasoupClient.Device();
+  await device.load({ routerRtpCapabilities: rtpCapabilities });
+
+  // 3. SendTransport 생성
+  const sendData = await socket.emitWithAck('createSendTransport');
+  sendTransport = device.createSendTransport(sendData.params);
+
+  sendTransport.on('connect', ({ dtlsParameters }, callback) => {
+    socket.emit('connectTransport', {
+      transport: sendData.transport,
+      dtlsParameters,
+    });
+    callback();
+  });
+
+  // 4. Producer 생성
+  producer = await sendTransport.produce({ track: audioTrack });
+
+  // 5. RecvTransport 생성
+  const recvData = await socket.emitWithAck('createRecvTransport');
+  recvTransport = device.createRecvTransport(recvData.params);
+
+  recvTransport.on('connect', ({ dtlsParameters }, callback) => {
+    socket.emit('connectTransport', {
+      transport: recvData.transport,
+      dtlsParameters,
+    });
+    callback();
+  });
+
+  const { id, rtpParameters } = await socket.emitWithAck('consume', {
+    producerId: producer.id,
+    transport: recvData.transport,
+  });
+
+  consumer = await recvTransport.consume({
+    id,
+    producerId: producer.id,
+    kind: 'audio',
+    rtpParameters,
+  });
+
+  // 6. 받은 오디오 출력
+  const audio = document.createElement('audio');
+  audio.srcObject = new MediaStream([consumer.track]);
+  audio.autoplay = true;
+  document.body.appendChild(audio);
+}
+
+init();
+</script>
