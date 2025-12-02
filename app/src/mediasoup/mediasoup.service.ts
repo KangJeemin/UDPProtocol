@@ -128,7 +128,7 @@ export class MediasoupService implements OnModuleInit {
     const consumer = await transport.consume({
       producerId: producer.id,
       rtpCapabilities,
-      paused: true,
+      paused: false,
     });
 
     return consumer;
