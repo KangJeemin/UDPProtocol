@@ -64,7 +64,7 @@ export class MediasoupService implements OnModuleInit {
   // WebRTC Transport 생성
   async createWebRtcTransport() {
     const transport = await this.router.createWebRtcTransport({
-      listenIps: [{ ip: '0.0.0.0', announcedIp: '127.0.0.1' }], // 로컬 개발용 IP 설정
+      listenIps: [{ ip: '0.0.0.0', announcedIp: '192.168.0.55' }], // 모바일 접속을 위해 로컬 IP 설정
       enableUdp: true,
       enableTcp: true,
       preferUdp: true,
