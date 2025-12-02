@@ -68,4 +68,11 @@ export class MediasoupGateway {
       rtpParameters: consumer.rtpParameters,
     };
   }
+
+  // 청취 
+  @SubscribeMessage('getProducerId')
+  getProducerId() {
+    const producerId = this.mediasoupService.getProducerId();
+    return { producerId };
+  }
 }

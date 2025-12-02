@@ -133,4 +133,11 @@ export class MediasoupService implements OnModuleInit {
 
     return consumer;
   }
+
+  getProducerId() {
+    if (this.producers.size === 0) {
+      return null;
+    }
+    return this.producers.values().next().value.id;
+  }
 }
